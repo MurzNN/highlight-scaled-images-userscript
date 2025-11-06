@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Highlight Scaled Images UserScript - Demo Page</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      margin: 0;
+      padding: 20px;
+      background-color: #f4f4f4;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      color: #333;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #666;
+      margin-bottom: 30px;
+      font-style: italic;
+    }
+
+    .section {
+      margin: 40px 0;
+      padding: 20px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      background: #fafafa;
+    }
+
+    .section h2 {
+      color: #444;
+      margin-top: 0;
+      border-bottom: 2px solid #007acc;
+      padding-bottom: 10px;
+    }
+
+    .image-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin: 20px 0;
+    }
+
+    .image-item {
+      text-align: center;
+      padding: 15px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .image-item h3 {
+      margin: 0 0 10px 0;
+      color: #333;
+      font-size: 16px;
+    }
+
+    .image-item p {
+      margin: 10px 0 0 0;
+      color: #666;
+      font-size: 14px;
+    }
+
+    .expected-highlight {
+      font-weight: bold;
+      padding: 5px 10px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-top: 5px;
+    }
+
+    .blue {
+      background-color: #e3f2fd;
+      color: #1976d2;
+    }
+
+    .green {
+      background-color: #e8f5e8;
+      color: #388e3c;
+    }
+
+    .red {
+      background-color: #ffebee;
+      color: #d32f2f;
+    }
+
+    .instructions {
+      background: #e7f3ff;
+      border-left: 4px solid #007acc;
+      padding: 15px;
+      margin: 20px 0;
+    }
+
+    .instructions h3 {
+      margin-top: 0;
+      color: #007acc;
+    }
+
+    .dynamic-section {
+      margin-top: 30px;
+    }
+
+    .load-button {
+      background: #007acc;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 10px 5px;
+    }
+
+    .load-button:hover {
+      background: #005a9e;
+    }
+
+    .resize-demo {
+      border: 2px dashed #ccc;
+      padding: 20px;
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    .resize-demo img {
+      transition: all 0.3s ease;
+    }
+
+    .size-controls {
+      margin: 15px 0;
+    }
+
+    .size-controls button {
+      background: #28a745;
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      margin: 0 5px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .size-controls button:hover {
+      background: #218838;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Highlight Scaled Images UserScript</h1>
+    <p class="subtitle">Demo Page - Test the UserScript Features</p>
+    <p>A useful tool for frontend developers to detect bad image quality issues on HTML pages. The script scans all
+      images and highlights problematic images: adds a tint and overlay text to images scaled by the browser (upscaled,
+      downscaled). <a href="https://github.com/MurzNN/highlight-scaled-images-userscript">GitHub Repository</a>.</p>
+    <div class="instructions">
+      <h3>📋 Instructions</h3>
+      <ol>
+        <li>Install the <strong>Highlight Scaled Images UserScript</strong> in Tampermonkey or Greasemonkey</li>
+        <li>Refresh this page</li>
+        <li>Observe the colored overlays and tints on the images below</li>
+        <li>Use the Tampermonkey menu to toggle different highlight types</li>
+        <li>Try the dynamic loading and resize features</li>
+      </ol>
+    </div>
+
+    <!-- Downscaled Images (Blue Highlights) -->
+    <div class="section">
+      <h2>🔵 Downscaled Images (Blue Highlights)</h2>
+      <p>These images are loaded at their full resolution but displayed smaller, wasting bandwidth and potentially
+        affecting performance.</p>
+
+      <div class="image-grid">
+        <div class="image-item">
+          <h3>Wrong image proportions</h3>
+          <img src="https://picsum.photos/200/150?random=1" width="199" height="150" alt="Downscaled image 1">
+          <p>Original: 200×150, Displayed: 199×150</p>
+          <div class="expected-highlight blue">Expected: Blue Highlight (100%)</div>
+        </div>
+
+        <div class="image-item">
+          <h3>Severely Downscaled</h3>
+          <img src="https://picsum.photos/1200/800?random=2" width="150" height="100" alt="Downscaled image 2">
+          <p>Original: 1200×800, Displayed: 150×100</p>
+          <div class="expected-highlight blue">Expected: Blue Highlight (12.5%)</div>
+        </div>
+
+        <div class="image-item">
+          <h3>Moderate Downscale</h3>
+          <img src="https://picsum.photos/840/410?random=3" width="133" height="200" alt="Downscaled image 3">
+          <p>Original: 840×410, Displayed: 133×200</p>
+          <div class="expected-highlight blue">Expected: Blue Highlight (48.78%)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upscaled Images (Red Highlights) -->
+    <div class="section">
+      <h2>🔴 Upscaled Images (Red Highlights)</h2>
+      <p>These small images are displayed larger than their original size, which can result in pixelation and poor
+        quality.</p>
+
+      <div class="image-grid">
+        <div class="image-item">
+          <h3>Small Image, Large Display</h3>
+          <img src="https://picsum.photos/150/100?random=7" width="300" height="200" alt="Upscaled image 1">
+          <p>Original: 150×100, Displayed: 300×200</p>
+          <div class="expected-highlight red">Expected: Red Highlight (200%)</div>
+        </div>
+
+        <div class="image-item">
+          <h3>Severely Upscaled</h3>
+          <img src="https://picsum.photos/100/75?random=8" width="400" height="300" alt="Upscaled image 2">
+          <p>Original: 100×75, Displayed: 400×300</p>
+          <div class="expected-highlight red">Expected: Red Highlight (400%)</div>
+        </div>
+
+        <div class="image-item">
+          <h3>Moderate Upscale</h3>
+          <img src="https://picsum.photos/200/150?random=9" width="300" height="225" alt="Upscaled image 3">
+          <p>Original: 200×150, Displayed: 300×225</p>
+          <div class="expected-highlight red">Expected: Red Highlight (150%)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Proportional Downscaled Images (Green Highlights) -->
+    <div class="section">
+      <h2>🟢 Proportional Downscaled Images (Green Highlights)</h2>
+      <p>These images are downscaled to exactly 2x or 4x smaller, which might be intentional for responsive design.</p>
+
+      <div class="image-grid">
+        <div class="image-item">
+          <h3>Exactly 2x Smaller</h3>
+          <img src="https://picsum.photos/400/300?random=4" width="200" height="150" alt="2x downscaled image">
+          <p>Original: 400×300, Displayed: 200×150</p>
+          <div class="expected-highlight green">Expected: Green Highlight (2x)</div>
+        </div>
+
+        <div class="image-item">
+          <h3>Exactly 4x Smaller</h3>
+          <img src="https://picsum.photos/800/600?random=5" width="200" height="150" alt="4x downscaled image">
+          <p>Original: 800×600, Displayed: 200×150</p>
+          <div class="expected-highlight green">Expected: Green Highlight (4x)</div>
+        </div>
+
+        <div class="image-item">
+          <h3>Another 2x Example</h3>
+          <img src="https://picsum.photos/600/400?random=6" width="300" height="200" alt="Another 2x downscaled image">
+          <p>Original: 600×400, Displayed: 300×200</p>
+          <div class="expected-highlight green">Expected: Green Highlight (2x)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Properly Sized Images (No Highlights) -->
+    <div class="section">
+      <h2>✅ Properly Sized Images (No Highlights)</h2>
+      <p>These images are displayed at their natural size and should not have any overlays.</p>
+
+      <div class="image-grid">
+        <div class="image-item">
+          <h3>Perfect Size Match</h3>
+          <img src="https://picsum.photos/250/200?random=10" alt="Properly sized image 1">
+          <p>Original: 250×200, Displayed: 250×200</p>
+          <div class="expected-highlight" style="background-color: #f0f0f0; color: #666;">Expected: No Highlight (100%)
+          </div>
+        </div>
+
+        <div class="image-item">
+          <h3>Another Perfect Match</h3>
+          <img src="https://picsum.photos/200/150?random=11" alt="Properly sized image 2">
+          <p>Original: 200×150, Displayed: 200×150</p>
+          <div class="expected-highlight" style="background-color: #f0f0f0; color: #666;">Expected: No Highlight (100%)
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dynamic Content Testing -->
+    <div class="section">
+      <h2>🔄 Dynamic Content Testing</h2>
+      <p>Test the UserScript's ability to detect images loaded dynamically via JavaScript.</p>
+
+      <div class="dynamic-section">
+        <button class="load-button" onclick="loadDynamicImage('downscale')">Load Downscaled Image</button>
+        <button class="load-button" onclick="loadDynamicImage('upscale')">Load Upscaled Image</button>
+        <button class="load-button" onclick="loadDynamicImage('proportional')">Load 2x Downscaled Image</button>
+        <button class="load-button" onclick="clearDynamicImages()">Clear Images</button>
+
+        <div id="dynamic-container"
+          style="margin-top: 20px; min-height: 200px; border: 2px dashed #ccc; padding: 20px; text-align: center;">
+          <p style="color: #666;">Dynamic images will appear here...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resize Testing -->
+    <div class="section">
+      <h2>📏 Resize Testing</h2>
+      <p>Test how the UserScript responds to image size changes. Click the buttons to resize the image below.</p>
+
+      <div class="resize-demo">
+        <img id="resize-image" src="https://picsum.photos/400/300?random=20" width="200" height="150"
+          alt="Resizable image">
+        <p>Original: 400×300, Current Display: <span id="current-size">200×150</span></p>
+
+        <div class="size-controls">
+          <button onclick="resizeImage(100, 75)">Tiny (100×75)</button>
+          <button onclick="resizeImage(200, 150)">Small (200×150)</button>
+          <button onclick="resizeImage(400, 300)">Natural (400×300)</button>
+          <button onclick="resizeImage(600, 450)">Large (600×450)</button>
+          <button onclick="resizeImage(800, 600)">Huge (800×600)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CSS Background Images -->
+    <div class="section">
+      <h2>🎨 CSS Background Images</h2>
+      <p>Note: The UserScript only detects &lt;img&gt; elements, not CSS background images.</p>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div
+          style="background-image: url('https://picsum.photos/800/400?random=30'); background-size: cover; height: 200px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.7);">
+          <strong>CSS Background (Not Detected)</strong>
+        </div>
+        <div style="text-align: center;">
+          <img src="https://picsum.photos/800/400?random=31" width="300" height="150" alt="IMG element">
+          <p><strong>&lt;img&gt; Element (Detected)</strong></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Performance Testing -->
+    <div class="section">
+      <h2>⚡ Performance Testing</h2>
+      <p>Multiple
+        images to test UserScript performance with many elements.</p>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px;">
+        <!-- Generate multiple small images -->
+        <img src="https://picsum.photos/200/150?random=40" width="50" height="38" alt="Perf test 1">
+        <img src="https://picsum.photos/200/150?random=41" width="50" height="38" alt="Perf test 2">
+        <img src="https://picsum.photos/200/150?random=42" width="50" height="38" alt="Perf test 3">
+        <img src="https://picsum.photos/200/150?random=43" width="50" height="38" alt="Perf test 4">
+        <img src="https://picsum.photos/200/150?random=44" width="50" height="38" alt="Perf test 5">
+        <img src="https://picsum.photos/200/150?random=45" width="50" height="38" alt="Perf test 6">
+        <img src="https://picsum.photos/200/150?random=46" width="50" height="38" alt="Perf test 7">
+        <img src="https://picsum.photos/200/150?random=47" width="50" height="38" alt="Perf test 8">
+        <img src="https://picsum.photos/200/150?random=48" width="50" height="38" alt="Perf test 9">
+        <img src="https://picsum.photos/200/150?random=49" width="50" height="38" alt="Perf test 10">
+      </div>
+      <p style="margin-top: 15px; color: #666; font-size: 14px;">All images above: Original 200×150, Displayed 50×38
+        (25% scale)</p>
+    </div>
+  </div>
+
+  <script>
+    let dynamicImageCounter = 0;
+
+    function loadDynamicImage(type) {
+      const container = document.getElementById('dynamic-container');
+      const imageDiv = document.createElement('div');
+      imageDiv.style.display = 'inline-block';
+      imageDiv.style.margin = '10px';
+      imageDiv.style.textAlign = 'center';
+
+      let img, description;
+      const randomId = Math.floor(Math.random() * 1000) + 100;
+
+      switch (type) {
+        case 'downscale':
+          img = `<img src="https://picsum.photos/600/400?random=${randomId}" width="150" height="100" alt="Dynamic downscaled">`;
+          description = 'Downscaled (600×400 → 150×100)';
+          break;
+        case 'upscale':
+          img = `<img src="https://picsum.photos/100/75?random=${randomId}" width="200" height="150" alt="Dynamic upscaled">`;
+          description = 'Upscaled (100×75 → 200×150)';
+          break;
+        case 'proportional':
+          img = `<img src="https://picsum.photos/400/300?random=${randomId}" width="200" height="150" alt="Dynamic 2x downscaled">`;
+          description = '2x Downscaled (400×300 → 200×150)';
+          break;
+      }
+
+      imageDiv.innerHTML = `
+                ${img}
+                <p style="margin: 5px 0; font-size: 12px; color: #666;">${description}</p>
+            `;
+
+      // Clear the placeholder text if this is the first image
+      if (container.children.length === 1 && container.children[0].tagName === 'P') {
+        container.innerHTML = '';
+      }
+
+      container.appendChild(imageDiv);
+    }
+
+    function clearDynamicImages() {
+      const container = document.getElementById('dynamic-container');
+      container.innerHTML = '<p style="color: #666;">Dynamic images will appear here...</p>';
+    }
+
+    function resizeImage(width, height) {
+      const img = document.getElementById('resize-image');
+      const sizeSpan = document.getElementById('current-size');
+
+      img.width = width;
+      img.height = height;
+      sizeSpan.textContent = `${width}×${height}`;
+    }
+
+    // Simulate lazy loading after page load
+    setTimeout(() => {
+      console.log('Simulating lazy-loaded content...');
+      // This would trigger the UserScript's MutationObserver
+    }, 2000);
+  </script>
+</body>
+
+</html>
