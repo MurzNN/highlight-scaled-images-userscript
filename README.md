@@ -38,7 +38,9 @@ Install the script with a userscript manager (Tampermonkey or Greasemonkey) — 
 
 ## Usage
 
-- Open any page with images — the script scans and highlights scaled images automatically.
+- Open any page with images.
+- Open Tampermonkey/Greasemonkey settings and enable the script for this domain.
+- The script will scan and highlight scaled images.
 - Overlays show: scale % (2 decimals), natural size, rendered size, and proportional hints (2x/4x).
 
 Customization

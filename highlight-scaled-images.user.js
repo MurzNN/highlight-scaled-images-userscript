@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Highlight Scaled Images
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.1
 // @description  A useful tool for frontend developers to detect bad image quality issues on HTML pages. The script scans all images and highlights problematic images: adds a tint and overlay text to images scaled by the browser (upscaled, downscaled).
 // @match        *://*/*
 // @grant        GM_registerMenuCommand
@@ -15,7 +15,10 @@
     // Default settings
     const DEFAULTS = {
         showDownscale: true,
-        showProportional: true
+        showProportional: true,
+        // enabledDomains holds an array of hostnames where the script is active.
+        // Empty array = disabled everywhere by default.
+        enabledDomains: []
     };
 
     // Utility to get and set settings
@@ -26,6 +29,41 @@
     }
     function setSetting(key, value) {
         GM_setValue(key, value);
+    }
+
+    // Domain helpers
+    function getHost() {
+        try { return location.hostname; } catch (e) { return ''; }
+    }
+    function isEnabledForCurrentDomain() {
+        const enabled = getSetting('enabledDomains') || [];
+        const host = getHost();
+        return enabled.indexOf(host) !== -1;
+    }
+    function enableForCurrentDomain() {
+        const host = getHost();
+        if (!host) return;
+        const enabled = Array.isArray(getSetting('enabledDomains')) ? getSetting('enabledDomains') : [];
+        if (enabled.indexOf(host) === -1) {
+            enabled.push(host);
+            setSetting('enabledDomains', enabled);
+        }
+    }
+    function disableForCurrentDomain() {
+        const host = getHost();
+        if (!host) return;
+        const enabled = Array.isArray(getSetting('enabledDomains')) ? getSetting('enabledDomains') : [];
+        const idx = enabled.indexOf(host);
+        if (idx !== -1) {
+            enabled.splice(idx, 1);
+            setSetting('enabledDomains', enabled);
+        }
+    }
+    function listEnabledDomains() {
+        return Array.isArray(getSetting('enabledDomains')) ? getSetting('enabledDomains') : [];
+    }
+    function clearEnabledDomains() {
+        setSetting('enabledDomains', []);
     }
 
     // Overlay logic
@@ -206,66 +244,116 @@
         applyTintToImages();
     });
 
-    // Initial scan
-    applyTintToImages();
-
-
-    // Reapply on window resize
-    window.addEventListener('resize', applyTintToImages);
-
-    // Debounced runner to avoid rapid repeat work and avoid reacting to our own changes
-    function debounce(fn, wait) {
-        let t = null;
-        return function () {
-            const args = arguments;
-            clearTimeout(t);
-            t = setTimeout(function () { fn.apply(null, args); }, wait);
-        };
-    }
-
-    const debouncedApply = debounce(applyTintToImages, 120);
-
-    // Reapply on DOM changes (lazy load, AJAX, etc.)
-    const observer = new MutationObserver(function (mutations) {
-        // ignore mutations that are only our overlays being added/removed
-        for (const m of mutations) {
-            if (m.type === 'childList') {
-                // if any added/removed node is our overlay, skip scheduling
-                const nodes = [...m.addedNodes, ...m.removedNodes];
-                let skip = false;
-                for (const n of nodes) {
-                    if (n.nodeType === 1 && n.classList && n.classList.contains('img-scale-overlay')) {
-                        skip = true;
-                        break;
-                    }
-                }
-                if (skip) continue;
-            }
-            // schedule debounced apply for other mutations
-            debouncedApply();
-            return;
-        }
+    // Domain enable/disable controls
+    GM_registerMenuCommand('Enable for this domain', function () {
+        enableForCurrentDomain();
+        console.log('Highlight Scaled Images: ENABLED for', getHost());
+        // apply immediately if on this host
+        if (isEnabledForCurrentDomain()) applyTintToImages();
     });
-    // avoid observing style/class changes we make; only observe src/srcset and structural changes
-    observer.observe(document.body, {
-        childList: true,
-        subtree: true,
-        attributes: true,
-        attributeFilter: ['src', 'srcset']
-    });
-    // Cleanup on page unload/navigation to avoid keeping observer references
-    function cleanup() {
-        try { observer.disconnect(); } catch (e) { /* ignore */ }
-        // remove any overlays we added
-        document.querySelectorAll('.img-scale-overlay').forEach(function (o) { o.remove(); });
-    }
-    window.addEventListener('beforeunload', cleanup, { passive: true });
-    window.addEventListener('pagehide', cleanup, { passive: true });
 
-    // Also reapply when images finish loading (for lazy-loaded images)
-    document.body.addEventListener('load', function (e) {
-        if (e.target.tagName === 'IMG') {
+    GM_registerMenuCommand('Disable for this domain', function () {
+        disableForCurrentDomain();
+        console.log('Highlight Scaled Images: DISABLED for', getHost());
+        // remove overlays and filters immediately
+        applyTintToImages();
+    });
+
+    GM_registerMenuCommand('List enabled domains', function () {
+        const list = listEnabledDomains();
+        alert('Enabled domains:\n' + (list.length ? list.join('\n') : '(none)'));
+    });
+
+    GM_registerMenuCommand('Clear enabled domains', function () {
+        if (confirm('Clear all enabled domains?')) {
+            clearEnabledDomains();
             applyTintToImages();
         }
-    }, true);
+    });
+
+    // Only run the active parts of the script when the current domain is enabled.
+    // Menu commands above remain available regardless.
+    let observer = null;
+    let debouncedApply = null;
+    function attachRuntime() {
+        // Initial scan
+        applyTintToImages();
+
+        // Reapply on window resize
+        window.addEventListener('resize', applyTintToImages);
+
+        // Debounced runner to avoid rapid repeat work and avoid reacting to our own changes
+        function debounce(fn, wait) {
+            let t = null;
+            return function () {
+                const args = arguments;
+                clearTimeout(t);
+                t = setTimeout(function () { fn.apply(null, args); }, wait);
+            };
+        }
+
+        debouncedApply = debounce(applyTintToImages, 120);
+
+        // Reapply on DOM changes (lazy load, AJAX, etc.)
+        observer = new MutationObserver(function (mutations) {
+            // ignore mutations that are only our overlays being added/removed
+            for (const m of mutations) {
+                if (m.type === 'childList') {
+                    // if any added/removed node is our overlay, skip scheduling
+                    const nodes = [...m.addedNodes, ...m.removedNodes];
+                    let skip = false;
+                    for (const n of nodes) {
+                        if (n.nodeType === 1 && n.classList && n.classList.contains('img-scale-overlay')) {
+                            skip = true;
+                            break;
+                        }
+                    }
+                    if (skip) continue;
+                }
+                // schedule debounced apply for other mutations
+                debouncedApply();
+                return;
+            }
+        });
+        // avoid observing style/class changes we make; only observe src/srcset and structural changes
+        try {
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: ['src', 'srcset']
+            });
+        } catch (e) {
+            // ignore if document.body isn't available yet
+        }
+
+        // Cleanup on page unload/navigation to avoid keeping observer references
+        window.addEventListener('beforeunload', cleanup, { passive: true });
+        window.addEventListener('pagehide', cleanup, { passive: true });
+
+        // Also reapply when images finish loading (for lazy-loaded images)
+        document.body.addEventListener('load', function (e) {
+            if (e.target.tagName === 'IMG') {
+                applyTintToImages();
+            }
+        }, true);
+    }
+
+    function detachRuntime() {
+        try { if (observer) observer.disconnect(); } catch (e) { /* ignore */ }
+        observer = null;
+        debouncedApply = null;
+        // remove any overlays we added and clear filters
+        document.querySelectorAll('.img-scale-overlay').forEach(function (o) { o.remove(); });
+        document.querySelectorAll('img').forEach(function (img) { img.style.filter = ''; });
+        // try to restore parent positions we modified
+        document.querySelectorAll('[data-original-position]').forEach(function (el) {
+            try { el.style.position = el.dataset.originalPosition || ''; delete el.dataset.originalPosition; } catch (e) { }
+        });
+    }
+
+    // Ensure runtime is attached only when enabled
+    if (isEnabledForCurrentDomain()) {
+        attachRuntime();
+    }
 })();
