@@ -2,7 +2,7 @@
 
 A useful tool for frontend developers to detect bad image quality issues on HTML pages. The script scans all images and highlights problematic images: adds a tint and overlay text to images scaled by the browser (upscaled, downscaled).
 
-- [Test page »»»](https://murznn.github.io/highlight-scaled-images-userscript/)
+- [Test page »](https://murznn.github.io/highlight-scaled-images-userscript/)
 
 ## Features
 
@@ -29,9 +29,9 @@ A useful tool for frontend developers to detect bad image quality issues on HTML
 
 ## Installation
 
-Install the script with a userscript manager (Tampermonkey or Greasemonkey) — the steps are the same across browsers:
+Install the script with a userscript manager ([Tampermonkey](https://www.tampermonkey.net/), [Greasemonkey](https://www.greasespot.net/), [ScriptCat](https://scriptcat.org/), [Violentmonkey](https://violentmonkey.github.io/), [FireMonkey](https://addons.mozilla.org/en-US/firefox/addon/firemonkey/), etc) — the steps are the same across browsers:
 
-1. Install Tampermonkey (Chrome, Firefox, Edge) or Greasemonkey (Firefox).
+1. Install [Tampermonkey](https://www.tampermonkey.net/) (Chrome, Firefox, Edge), [Greasemonkey](https://www.greasespot.net/) (Firefox), or any other browser extension.
 2. Using the script search, find this script by the name "Highlight Scaled Images", or install using [this direct link](https://github.com/MurzNN/highlight-scaled-images-userscript/raw/refs/heads/main/highlight-scaled-images.user.js).
 
 
@@ -39,7 +39,7 @@ Install the script with a userscript manager (Tampermonkey or Greasemonkey) — 
 ## Usage
 
 - Open any page with images.
-- Open Tampermonkey/Greasemonkey settings and enable the script for this domain.
+- Add the domain to the list of enabled in the userscript menu.
 - The script will scan and highlight scaled images.
 - Overlays show: scale % (2 decimals), natural size, rendered size, and proportional hints (2x/4x).
 
