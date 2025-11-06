@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Highlight Scaled Images
 // @namespace    http://tampermonkey.net/
-// @version      1.1
+// @version      1.2
 // @description  A useful tool for frontend developers to detect bad image quality issues on HTML pages. The script scans all images and highlights problematic images: adds a tint and overlay text to images scaled by the browser (upscaled, downscaled).
 // @match        *://*/*
 // @grant        GM_registerMenuCommand
@@ -18,7 +18,9 @@
         showProportional: true,
         // enabledDomains holds an array of hostnames where the script is active.
         // Empty array = disabled everywhere by default.
-        enabledDomains: []
+        enabledDomains: [
+            'murznn.github.io',
+        ]
     };
 
     // Utility to get and set settings
@@ -229,58 +231,175 @@
         });
     }
 
+    // Settings modal
+    function createSettingsModal() {
+        // Remove existing modal if present
+        const existing = document.getElementById('img-scale-settings-modal');
+        if (existing) existing.remove();
+
+        const modal = document.createElement('div');
+        modal.id = 'img-scale-settings-modal';
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 999999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+        `;
+
+        const panel = document.createElement('div');
+        panel.style.cssText = `
+            background: #fff;
+            border-radius: 8px;
+            padding: 24px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        `;
+
+        const currentHost = getHost();
+        const isEnabled = isEnabledForCurrentDomain();
+        const showDownscale = getSetting('showDownscale');
+        const showProportional = getSetting('showProportional');
+        const enabledDomains = listEnabledDomains();
+
+        panel.innerHTML = `
+            <h2 style="margin: 0 0 20px 0; font-size: 20px; color: #333;">Highlight Scaled Images - Settings</h2>
+
+            <div style="margin-bottom: 20px;">
+                <h3 style="margin: 0 0 10px 0; font-size: 16px; color: #555;">Current Domain</h3>
+                <div style="margin-bottom: 10px; padding: 10px; background: #f5f5f5; border-radius: 4px;">
+                    <strong>${currentHost}</strong>
+                    <div style="margin-top: 8px;">
+                        <button id="toggle-domain-btn" style="padding: 6px 12px; background: ${isEnabled ? '#dc3545' : '#28a745'}; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">
+                            ${isEnabled ? 'Disable' : 'Enable'} for this domain
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <h3 style="margin: 0 0 10px 0; font-size: 16px; color: #555;">Highlight Options</h3>
+                <label style="display: block; margin-bottom: 8px; cursor: pointer;">
+                    <input type="checkbox" id="show-downscale" ${showDownscale ? 'checked' : ''} style="margin-right: 8px;">
+                    Show Downscale (blue) highlight
+                </label>
+                <label style="display: block; margin-bottom: 8px; cursor: pointer;">
+                    <input type="checkbox" id="show-proportional" ${showProportional ? 'checked' : ''} style="margin-right: 8px;">
+                    Show Proportional (green) highlight
+                </label>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <h3 style="margin: 0 0 10px 0; font-size: 16px; color: #555;">Enabled Domains</h3>
+                <div id="domains-list" style="max-height: 150px; overflow-y: auto; padding: 10px; background: #f5f5f5; border-radius: 4px; margin-bottom: 10px;">
+                    ${enabledDomains.length ? enabledDomains.map(d => `<div style="margin-bottom: 4px;">• ${d}</div>`).join('') : '<div style="color: #999;">No domains enabled</div>'}
+                </div>
+                <button id="clear-domains-btn" style="padding: 6px 12px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;" ${enabledDomains.length ? '' : 'disabled'}>
+                    Clear all domains
+                </button>
+            </div>
+
+            <div style="text-align: right; margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
+                <button id="close-settings-btn" style="padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">
+                    Close
+                </button>
+            </div>
+        `;
+
+        modal.appendChild(panel);
+        document.body.appendChild(modal);
+
+        // Event handlers
+        modal.addEventListener('click', function (e) {
+            if (e.target === modal) modal.remove();
+        });
+
+        document.getElementById('close-settings-btn').addEventListener('click', function () {
+            modal.remove();
+        });
+
+        document.getElementById('toggle-domain-btn').addEventListener('click', function () {
+            if (isEnabledForCurrentDomain()) {
+                disableForCurrentDomain();
+                console.log('Highlight Scaled Images: DISABLED for', currentHost);
+                detachRuntime();
+            } else {
+                enableForCurrentDomain();
+                console.log('Highlight Scaled Images: ENABLED for', currentHost);
+                attachRuntime();
+            }
+            modal.remove();
+        });
+
+        document.getElementById('show-downscale').addEventListener('change', function (e) {
+            setSetting('showDownscale', e.target.checked);
+            console.log('Downscale highlight:', e.target.checked ? 'ON' : 'OFF');
+            if (isEnabledForCurrentDomain()) applyTintToImages();
+        });
+
+        document.getElementById('show-proportional').addEventListener('change', function (e) {
+            setSetting('showProportional', e.target.checked);
+            console.log('Proportional highlight:', e.target.checked ? 'ON' : 'OFF');
+            if (isEnabledForCurrentDomain()) applyTintToImages();
+        });
+
+        document.getElementById('clear-domains-btn').addEventListener('click', function () {
+            if (confirm('Clear all enabled domains?')) {
+                clearEnabledDomains();
+                console.log('All enabled domains cleared');
+                modal.remove();
+                detachRuntime();
+            }
+        });
+
+        // Close on Escape key
+        const escHandler = function (e) {
+            if (e.key === 'Escape') {
+                modal.remove();
+                document.removeEventListener('keydown', escHandler);
+            }
+        };
+        document.addEventListener('keydown', escHandler);
+    }
+
     // Menu registration (only once, no duplicates)
-    GM_registerMenuCommand('Toggle Downscale (blue) highlight', function () {
-        const current = getSetting('showDownscale');
-        setSetting('showDownscale', !current);
-        console.log('Downscale highlight:', !current ? 'ON' : 'OFF');
-        applyTintToImages();
-    });
-
-    GM_registerMenuCommand('Toggle Proportional (green) highlight', function () {
-        const current = getSetting('showProportional');
-        setSetting('showProportional', !current);
-        console.log('Proportional highlight:', !current ? 'ON' : 'OFF');
-        applyTintToImages();
-    });
-
-    // Domain enable/disable controls
     GM_registerMenuCommand('Enable for this domain', function () {
-        enableForCurrentDomain();
-        console.log('Highlight Scaled Images: ENABLED for', getHost());
-        // apply immediately if on this host
-        if (isEnabledForCurrentDomain()) applyTintToImages();
-    });
-
-    GM_registerMenuCommand('Disable for this domain', function () {
-        disableForCurrentDomain();
-        console.log('Highlight Scaled Images: DISABLED for', getHost());
-        // remove overlays and filters immediately
-        applyTintToImages();
-    });
-
-    GM_registerMenuCommand('List enabled domains', function () {
-        const list = listEnabledDomains();
-        alert('Enabled domains:\n' + (list.length ? list.join('\n') : '(none)'));
-    });
-
-    GM_registerMenuCommand('Clear enabled domains', function () {
-        if (confirm('Clear all enabled domains?')) {
-            clearEnabledDomains();
-            applyTintToImages();
+        const currentHost = getHost();
+        if (isEnabledForCurrentDomain()) {
+            alert(`This domain (${currentHost}) is already enabled.\n\nUse the Settings menu to disable it.`);
+        } else {
+            enableForCurrentDomain();
+            console.log('Highlight Scaled Images: ENABLED for', currentHost);
+            attachRuntime();
         }
+    });
+
+    GM_registerMenuCommand('Settings', function () {
+        createSettingsModal();
     });
 
     // Only run the active parts of the script when the current domain is enabled.
     // Menu commands above remain available regardless.
     let observer = null;
     let debouncedApply = null;
+    let resizeHandler = null;
+    let loadHandler = null;
+
     function attachRuntime() {
+        // Don't attach if already attached
+        if (observer) return;
+
         // Initial scan
         applyTintToImages();
-
-        // Reapply on window resize
-        window.addEventListener('resize', applyTintToImages);
 
         // Debounced runner to avoid rapid repeat work and avoid reacting to our own changes
         function debounce(fn, wait) {
@@ -293,6 +412,10 @@
         }
 
         debouncedApply = debounce(applyTintToImages, 120);
+
+        // Reapply on window resize
+        resizeHandler = function () { applyTintToImages(); };
+        window.addEventListener('resize', resizeHandler);
 
         // Reapply on DOM changes (lazy load, AJAX, etc.)
         observer = new MutationObserver(function (mutations) {
@@ -327,22 +450,33 @@
             // ignore if document.body isn't available yet
         }
 
-        // Cleanup on page unload/navigation to avoid keeping observer references
-        window.addEventListener('beforeunload', cleanup, { passive: true });
-        window.addEventListener('pagehide', cleanup, { passive: true });
-
         // Also reapply when images finish loading (for lazy-loaded images)
-        document.body.addEventListener('load', function (e) {
+        loadHandler = function (e) {
             if (e.target.tagName === 'IMG') {
                 applyTintToImages();
             }
-        }, true);
+        };
+        document.body.addEventListener('load', loadHandler, true);
     }
 
     function detachRuntime() {
+        // Disconnect observer
         try { if (observer) observer.disconnect(); } catch (e) { /* ignore */ }
         observer = null;
         debouncedApply = null;
+
+        // Remove event listeners
+        if (resizeHandler) {
+            window.removeEventListener('resize', resizeHandler);
+            resizeHandler = null;
+        }
+        if (loadHandler) {
+            try {
+                document.body.removeEventListener('load', loadHandler, true);
+            } catch (e) { /* ignore */ }
+            loadHandler = null;
+        }
+
         // remove any overlays we added and clear filters
         document.querySelectorAll('.img-scale-overlay').forEach(function (o) { o.remove(); });
         document.querySelectorAll('img').forEach(function (img) { img.style.filter = ''; });
