@@ -3,6 +3,7 @@
 // @namespace    http://tampermonkey.net/
 // @version      1.2
 // @description  A useful tool for frontend developers to detect bad image quality issues on HTML pages. The script scans all images and highlights problematic images: adds a tint and overlay text to images scaled by the browser (upscaled, downscaled).
+// @license      MIT
 // @match        *://*/*
 // @grant        GM_registerMenuCommand
 // @grant        GM_setValue
