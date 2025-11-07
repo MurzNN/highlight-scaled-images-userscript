@@ -1,4 +1,4 @@
-# Highlight Scaled Images UserScript
+# Highlight Scaled Images Userscript (user.js)
 
 A useful tool for frontend developers to detect bad image quality issues on HTML pages. The script scans all images and highlights problematic images: adds a tint and overlay text to images scaled by the browser (upscaled, downscaled).
 
@@ -19,7 +19,7 @@ A useful tool for frontend developers to detect bad image quality issues on HTML
 
 ### Smart Detection
 - **Real-time monitoring** - automatically detects images loaded via AJAX or lazy loading
-- **Responsive updates** - overlays update when window is resized
+- **Responsive updates** - overlays update when the window is resized
 - **Dynamic content support** - works with single-page applications and dynamic content
 
 ### Example Overlay Text
